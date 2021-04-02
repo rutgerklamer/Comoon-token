@@ -246,13 +246,13 @@ contract ICOSale {
 	uint public startTime;
 	uint public minBuy;
 	uint public maxBuy;
-	address public erc20;
+	address public bep20;
 	mapping(address => uint) public boughtAmount;
 
-	constructor(address _governor,uint _initialPriceInWei,address _erc20TokenAddress, uint8 _decimal,uint _closeTime,uint _startTime,uint _minBuy,uint _maxBuy) public {
+	constructor(address _governor,uint _initialPriceInWei,address _bep20TokenAddress, uint8 _decimal,uint _closeTime,uint _startTime,uint _minBuy,uint _maxBuy) public {
 		governor = _governor;
 		priceInWei = _initialPriceInWei;
-		erc20 = _erc20TokenAddress;
+		bep20 = _bep20TokenAddress;
 		decimal = _decimal;
 		closeTime = _closeTime;
 		startTime = _startTime;
@@ -267,26 +267,26 @@ contract ICOSale {
 		require(closeTime > now,"Sale Is Now Closed!");
 		require(startTime < now,"Sale Is Yet To Start!");
 		uint _amounttosell = (_amount ** decimal).div(priceInWei);
-		IBEP20(erc20).transfer(msg.sender,_amounttosell);
+		IBEP20(bep20).transfer(msg.sender,_amounttosell);
 		boughtAmount[msg.sender] = boughtAmount[msg.sender].add(_amounttosell);
 	}
 
 	function AddReserves(uint _amount) external {
 		require(msg.sender == governor,"Only Governor Can Add Reserves!");
 		require(_amount > 0,"You Have To Add More Then 0 Tokens!");
-		uint _allowance = IBEP20(erc20).allowance(msg.sender,address(this));
+		uint _allowance = IBEP20(bep20).allowance(msg.sender,address(this));
 		require(_allowance >= _amount,"Please Approve The Contract Address With Amount To Be Reserved!");
-		IBEP20(erc20).transferFrom(msg.sender,address(this),_amount);
+		IBEP20(bep20).transferFrom(msg.sender,address(this),_amount);
 	}
 
 	function RemoveReserves(uint _amount) external {
 		require(msg.sender == governor,"Only Governor Can Remove Reserves!");
 		require(GetReserves() <= _amount,"Not Enough Token To Remove!");
-		IBEP20(erc20).transfer(msg.sender,_amount);
+		IBEP20(bep20).transfer(msg.sender,_amount);
 	}
 
 	function GetReserves() public view  returns (uint) {
-		return IBEP20(erc20).balanceOf(address(this));
+		return IBEP20(bep20).balanceOf(address(this));
 	}
 
 	function GetWeiBalance() public view returns (uint) {
@@ -327,6 +327,11 @@ contract ICOSale {
 	function changeMaxBuy(uint _maxBuy) external {
 		require(msg.sender == governor,"Only Governor Can Change Max Tokens Per Address!");
 		maxBuy = _maxBuy;
+	}
+
+	function changeBEP20Adress(address _newBep20Adress) external {
+		require(msg.sender == governor,"Only Governor Can Change The Adress!");
+		bep20 = _newBep20Adress;
 	}
 
 	function changeGovernor(address _newGovernor) external {
